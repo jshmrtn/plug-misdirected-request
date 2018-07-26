@@ -21,16 +21,28 @@ defmodule PlugMisdirectedRequestTest do
   describe "init" do
     test "domain auto only works with endpoint" do
       assert_raise RuntimeError, fn ->
-        PlugMisdirectedRequest.init(domain: :auto)
+        defmodule EndpointWithoutEndpoint do
+          use Phoenix.Endpoint, otp_app: :plug_misdirected_request
+
+          plug(PlugMisdirectedRequest, domain: :auto)
+        end
       end
     end
 
     test "domain auto only works with valid endpoint" do
       assert_raise RuntimeError, fn ->
-        PlugMisdirectedRequest.init(domain: :auto, endpoint: Foo)
+        defmodule EndpointInvalidEndpoint do
+          use Phoenix.Endpoint, otp_app: :plug_misdirected_request
+
+          plug(PlugMisdirectedRequest, domain: :auto, endpoint: __MODULE__.SomeEndpoint)
+        end
       end
 
-      assert PlugMisdirectedRequest.init(domain: :auto, endpoint: Endpoint)
+      defmodule EndpointValidEndpoint do
+        use Phoenix.Endpoint, otp_app: :plug_misdirected_request
+
+        plug(PlugMisdirectedRequest, domain: :auto, endpoint: __MODULE__)
+      end
     end
   end
 

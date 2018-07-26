@@ -25,9 +25,8 @@ defmodule PlugMisdirectedRequest do
       |> Enum.into(%{})
       |> case do
         %{endpoint: endpoint_module, domain: :auto} when is_atom(endpoint_module) ->
-          if Code.ensure_compiled?(endpoint_module) and
-               function_exported?(endpoint_module, :config, 2) do
-            opts
+          if is_phoenix_endpoint?(endpoint_module) do
+            Enum.into(opts, %{})
           else
             raise "The specified `endpoint` is not a phoenix endpoint"
           end
@@ -36,7 +35,7 @@ defmodule PlugMisdirectedRequest do
           raise "For the domain strategy auto, an endpoint has to be specified"
 
         %{domin: domain} = opts when is_binary(domain) ->
-          opts
+          Enum.into(opts, %{})
       end
     end
   else
@@ -48,7 +47,7 @@ defmodule PlugMisdirectedRequest do
           raise "For the domain strategy auto, phoenix has to be installed"
 
         %{domin: domain} = opts when is_binary(domain) ->
-          opts
+          Enum.into(opts, %{})
       end
     end
   end
@@ -88,5 +87,12 @@ defmodule PlugMisdirectedRequest do
 
   defp call(_, conn, _opts) do
     conn
+  end
+
+  defp is_phoenix_endpoint?(module) do
+    Module.defines?(module, {:config, 2})
+  rescue
+    ArgumentError ->
+      false
   end
 end
